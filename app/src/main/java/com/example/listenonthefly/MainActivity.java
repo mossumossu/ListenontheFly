@@ -50,12 +50,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        initUI();
-        initRecycler();
-        initSeekbar();
-        initPlaybackController();
 
-        Log.d(TAG, "onCreate: complete");
 
         if(ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) !=
                 PackageManager.PERMISSION_GRANTED) {
@@ -69,44 +64,57 @@ public class MainActivity extends AppCompatActivity {
             {
                 doStuff();// we may already have this method named something else.
             }
+
+        initUI();
+        initRecycler();
+        initSeekbar();
+        initPlaybackController();
+
+        Log.d(TAG, "onCreate: complete");
         }
 
         //ALL these lines are what we need to change
         public void doStuff(){
-            listView = (ListView) findViewById(R.id.listView);
-            arrayList = new ArrayList<>();
+            //listView = (ListView) findViewById(R.id.listView);
+            //arrayList = new ArrayList<>();
             getMusic();
-            adapter = new ArraryAdapter<String>(this, android.R.layout.simple_list_item_1, arrayList);
-            listView.setAdapter(adapter);
+            //adapter = new ArraryAdapter<String>(this, android.R.layout.simple_list_item_1, arrayList);
+            //listView.setAdapter(adapter);
 
-            listView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+            /*listView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
                 @Override
                 public void onItemClick(AdapterView<?> adapterView, View view, int i, long l){
                     //open music player to play desired song
                 }
             });
+            */
         }
 
         //this also came from the video
         public void getMusic(){
             ContentResolver contentResolver = getContentResolver();
-            Uri songUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+            Uri songUri = Uri.parse(MediaStore.Audio.Media.INTERNAL_CONTENT_URI.getPath());
+            Log.d(TAG, songUri.getPath());
             Cursor songCursor = contentResolver.query(songUri, null, null, null, null);
+
 
             if(songCursor != null && songCursor.moveToFirst()){
                 int songTitle = songCursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
                 int songArtist = songCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
                 int songLocation = songCursor.getColumnIndex(MediaStore.Audio.Media.DATA);
+                int songDuration = songCursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
 
                 do{
                     String currentTitle = songCursor.getString(songTitle);
                     String currentArtist = songCursor.getString(songArtist);
                     String currentLocation = songCursor.getString(songLocation);
-                    arrayList.add("Title: " + currentTitle + "\n" + "Artist: " + currentArtist + "\n" + "Location: " + currentLocation);
+                    String currentDuration = songCursor.getString(songDuration);
+                    songListItem cursorItem = new songListItem(currentTitle, currentArtist, currentLocation, currentDuration);
+                    songs.add(cursorItem);
                 }while (songCursor.moveToNext());
             }
         }
-//Also came from video
+        //Also came from video
         @Override
         public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults){
             switch (requestCode){
@@ -165,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
 
     // read user music directory, use adapter to populate recyclerview
     private void initRecycler(){
-        songListItem test1 = new songListItem("Test this");
+        /*songListItem test1 = new songListItem("Test this");
         songListItem test2 = new songListItem("Test are cool");
         songListItem test3 = new songListItem("Test bananana");
         songListItem test4 = new songListItem("Test balls");
@@ -174,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
         songs.add(test2);
         songs.add(test3);
         songs.add(test4);
-
+        */
         ItemAdapter adapter = new ItemAdapter(songs);
         mRecycler.setAdapter(adapter);
         mRecycler.setLayoutManager(new LinearLayoutManager(this));
@@ -231,18 +239,35 @@ public class MainActivity extends AppCompatActivity {
 
     public class songListItem{
         private String title;
+        private String artist;
+        private String songUri;
+        private String duration;
+
+        public songListItem(String inputTitle, String inputArtist, String inputUri, String inputDuration){
+            title = inputTitle;
+            artist = inputArtist;
+            songUri = inputUri;
+            duration = inputDuration;
+        }
 
         public songListItem(String inputTitle){
             title = inputTitle;
-
         }
 
         public String getTitle() {
             return title;
         }
 
-        public void setTitle(String title) {
-            this.title = title;
+        public String getArtist() {
+            return artist;
+        }
+
+        public String getSongUri() {
+            return songUri;
+        }
+
+        public String getDuration() {
+            return duration;
         }
     }
 
