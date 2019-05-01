@@ -2,6 +2,7 @@ package com.example.listenonthefly;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -16,11 +17,14 @@ public class MainActivity extends AppCompatActivity {
 
     private PlayerAdapter mPlayerAdapter;
     private SeekBar mSeekBar;
+    private RecyclerView mRecycler;
+    private boolean isUserSeeking = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         initUI();
         initRecycler();
         initSeekbar();
@@ -29,25 +33,40 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "onCreate: complete");
     }
 
+    @Override
+    protected void onStart(){
+        super.onStart();
+        mPlayerAdapter.loadMedia(MEDIA_RES_ID);
+    }
+
+    @Override
+    protected void onStop(){
+        super.onStop();
+        mPlayerAdapter.release();
+    }
+
     private void initUI(){
         Button btnPlay = (Button) findViewById(R.id.btnPlay);
         Button btnPause = (Button) findViewById(R.id.btnPause);
         mSeekBar = (SeekBar) findViewById(R.id.seekBar);
+        mRecycler = (RecyclerView) findViewById(R.id.recyclerView);
 
         btnPlay.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        mPlayerAdapter.pause();
-                    }
-                });
-        btnPause.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         mPlayerAdapter.play();
                     }
                 });
+        btnPause.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        mPlayerAdapter.pause();
+                    }
+                });
+
+        Log.d(TAG, "initUI: complete");
     }
 
     // read user music directory, use adapter to populate recyclerview
@@ -58,19 +77,24 @@ public class MainActivity extends AppCompatActivity {
     private void initSeekbar(){
         mSeekBar.setOnSeekBarChangeListener(
                 new SeekBar.OnSeekBarChangeListener() {
+                    int userPosition = 0;
+
                     @Override
                     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
+                        if (fromUser){
+                            userPosition = progress;
+                        }
                     }
 
                     @Override
                     public void onStartTrackingTouch(SeekBar seekBar) {
-
+                        isUserSeeking = true;
                     }
 
                     @Override
                     public void onStopTrackingTouch(SeekBar seekBar) {
-
+                        isUserSeeking = false;
+                        mPlayerAdapter.seekTo(userPosition);
                     }
                 }
         );
@@ -86,7 +110,16 @@ public class MainActivity extends AppCompatActivity {
     public class PlaybackListener extends PlaybackInfoListener {
         @Override
         public void onDurationChanged(int duration){
+            mSeekBar.setMax(duration);
+            Log.d(TAG, "onDurationChanged: complete");
+        }
 
+        @Override
+        public void onPositionChanged(int position){
+            if (!isUserSeeking){
+                mSeekBar.setProgress(position, true);
+                Log.d(TAG, "onPositionChanged: complete");
+            }
         }
     }
 }

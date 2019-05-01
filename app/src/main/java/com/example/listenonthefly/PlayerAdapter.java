@@ -10,11 +10,9 @@ public interface PlayerAdapter {
 
     void play();
 
-    void reset();
-
     void pause();
 
-    void initializeProgressCallback();
+    void initListener();
 
     void seekTo(int position);
 }
