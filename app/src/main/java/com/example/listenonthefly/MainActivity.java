@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
         //this also came from the video
         public void getMusic(){
             ContentResolver contentResolver = getContentResolver();
-            Uri songUri = Uri.parse(MediaStore.Audio.Media.INTERNAL_CONTENT_URI.getPath());
+            Uri songUri = MediaStore.Audio.Media.INTERNAL_CONTENT_URI;
             Log.d(TAG, songUri.getPath());
             Cursor songCursor = contentResolver.query(songUri, null, null, null, null);
 
