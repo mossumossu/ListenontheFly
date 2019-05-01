@@ -19,7 +19,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String TAG = "MainActivity";
+    public static final String TAG = "MainActivity"; 
 
     // royalty free music from bensound.com, for testing
     public static final int MEDIA_RES_ID = R.raw.bensoundtheelevatorbossanova;
