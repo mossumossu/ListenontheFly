@@ -1,12 +1,21 @@
 package com.example.listenonthefly;
 
+import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Layout;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.SeekBar;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -19,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
     private SeekBar mSeekBar;
     private RecyclerView mRecycler;
     private boolean isUserSeeking = false;
+    public ArrayList<songListItem> songs = new ArrayList<songListItem>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +82,15 @@ public class MainActivity extends AppCompatActivity {
     // read user music directory, use adapter to populate recyclerview
     private void initRecycler(){
 
+        songListItem test1 = new songListItem("Test this");
+        songListItem test2 = new songListItem("Test are cool");
+        songListItem test3 = new songListItem("Test bananana");
+        songListItem test4 = new songListItem("Test balls");
+
+        ItemAdapater adpater = new ItemAdapater(songs);
+        mRecycler.setAdapter(adpater);
+        mRecycler.setLayoutManager(new LinearLayoutManager(this));
+
     }
 
     private void initSeekbar(){
@@ -122,4 +141,63 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    public class songListItem{
+        private String title;
+
+        public songListItem(String inputTitle){
+            title = inputTitle;
+
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+    }
+
+    public class ItemAdapater extends RecyclerView.Adapter<ItemAdapater.ViewHolder>{
+
+        private List<songListItem> songs;
+
+        public ItemAdapater(List<songListItem> inputSongs) {
+            this.songs = inputSongs;
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int i) {
+
+            Context context = parent.getContext();
+            LayoutInflater inflater = LayoutInflater.from(context);
+
+            View itemView = inflater.inflate(R.layout.songlistitem, parent, false);
+
+            ViewHolder viewHolder = new ViewHolder(itemView);
+            return viewHolder;
+
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ItemAdapater.ViewHolder viewHolder, int i) {
+
+        }
+
+        @Override
+        public int getItemCount(){
+            return songs.size();
+        }
+
+        public class ViewHolder extends RecyclerView.ViewHolder{
+
+
+            public ViewHolder(@NonNull View itemView) {
+                super(itemView);
+            }
+        }
+    }
+
 }
