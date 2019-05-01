@@ -23,6 +23,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -35,6 +36,8 @@ public class MainActivity extends AppCompatActivity {
 
     // royalty free music from bensound.com, for testing
     public static final int MEDIA_RES_ID = R.raw.bensoundtheelevatorbossanova;
+
+    public int currentSongId = 0;
 
     private PlayerAdapter mPlayerAdapter;
     private SeekBar mSeekBar;
@@ -162,16 +165,19 @@ public class MainActivity extends AppCompatActivity {
 
     // read user music directory, use adapter to populate recyclerview
     private void initRecycler(){
-
         songListItem test1 = new songListItem("Test this");
         songListItem test2 = new songListItem("Test are cool");
         songListItem test3 = new songListItem("Test bananana");
         songListItem test4 = new songListItem("Test balls");
 
-        ItemAdapater adpater = new ItemAdapater(songs);
-        mRecycler.setAdapter(adpater);
-        mRecycler.setLayoutManager(new LinearLayoutManager(this));
+        songs.add(test1);
+        songs.add(test2);
+        songs.add(test3);
+        songs.add(test4);
 
+        ItemAdapter adapter = new ItemAdapter(songs);
+        mRecycler.setAdapter(adapter);
+        mRecycler.setLayoutManager(new LinearLayoutManager(this));
     }
 
     private void initSeekbar(){
@@ -240,18 +246,16 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public class ItemAdapater extends RecyclerView.Adapter<ItemAdapater.ViewHolder>{
-
+    public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder>{
         private List<songListItem> songs;
 
-        public ItemAdapater(List<songListItem> inputSongs) {
+        public ItemAdapter(List<songListItem> inputSongs) {
             this.songs = inputSongs;
         }
 
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int i) {
-
             Context context = parent.getContext();
             LayoutInflater inflater = LayoutInflater.from(context);
 
@@ -259,11 +263,16 @@ public class MainActivity extends AppCompatActivity {
 
             ViewHolder viewHolder = new ViewHolder(itemView);
             return viewHolder;
-
         }
 
         @Override
-        public void onBindViewHolder(@NonNull ItemAdapater.ViewHolder viewHolder, int i) {
+        public void onBindViewHolder(@NonNull ItemAdapter.ViewHolder viewHolder, int i) {
+            songListItem item = songs.get(i);
+
+            TextView tvTitle = viewHolder.tvTitle;
+            tvTitle.setText(item.getTitle());
+
+            // expand as needed for other properties
 
         }
 
@@ -274,9 +283,21 @@ public class MainActivity extends AppCompatActivity {
 
         public class ViewHolder extends RecyclerView.ViewHolder{
 
+            public TextView tvTitle;
+
 
             public ViewHolder(@NonNull View itemView) {
                 super(itemView);
+
+                tvTitle = (TextView) itemView.findViewById(R.id.tvTitle);
+
+                itemView.setOnClickListener(new View.OnClickListener(){
+                    @Override
+                    public void onClick(View v){
+                        currentSongId = mRecycler.getChildAdapterPosition(v);
+                        Log.d(TAG, "ViewHolder onClick: complete");
+                    }
+                });
             }
         }
     }
