@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -46,14 +47,12 @@ public class MainActivity extends AppCompatActivity {
     public ArrayList<songListItem> songs = new ArrayList<songListItem>();
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-
-        if(ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) !=
-                PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) !=
+                PackageManager.PERMISSION_GRANTED){
             if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
                     Manifest.permission.READ_EXTERNAL_STORAGE)) {
                 ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, MY_PERMISSION_REQUEST);
@@ -62,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
             }
         } else
             {
-                doStuff();// we may already have this method named something else.
+                getMusic();// we may already have this method named something else.
             }
 
         initUI();
@@ -73,66 +72,47 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "onCreate: complete");
         }
 
-        //ALL these lines are what we need to change
-        public void doStuff(){
-            //listView = (ListView) findViewById(R.id.listView);
-            //arrayList = new ArrayList<>();
-            getMusic();
-            //adapter = new ArraryAdapter<String>(this, android.R.layout.simple_list_item_1, arrayList);
-            //listView.setAdapter(adapter);
+    public void getMusic(){
+        ContentResolver contentResolver = getContentResolver();
+        Uri songUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        Log.d(TAG, songUri.getPath());
+        Cursor songCursor = contentResolver.query(songUri, null, null, null, null);
 
-            /*listView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
-                @Override
-                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l){
-                    //open music player to play desired song
-                }
-            });
-            */
+        if (songCursor != null && songCursor.moveToFirst()) {
+            int songTitle = songCursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
+            int songArtist = songCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
+            int songLocation = songCursor.getColumnIndex(MediaStore.Audio.Media.DATA);
+            int songDuration = songCursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
+
+            do {
+                String currentTitle = songCursor.getString(songTitle);
+                String currentArtist = songCursor.getString(songArtist);
+                String currentLocation = songCursor.getString(songLocation);
+                String currentDuration = songCursor.getString(songDuration);
+                songListItem cursorItem = new songListItem(currentTitle, currentArtist, currentLocation, currentDuration);
+                songs.add(cursorItem);
+            } while (songCursor.moveToNext());
         }
+    }
 
-        //this also came from the video
-        public void getMusic(){
-            ContentResolver contentResolver = getContentResolver();
-            Uri songUri = MediaStore.Audio.Media.INTERNAL_CONTENT_URI;
-            Log.d(TAG, songUri.getPath());
-            Cursor songCursor = contentResolver.query(songUri, null, null, null, null);
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode){
+            case MY_PERMISSION_REQUEST: {
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    if(ContextCompat.checkSelfPermission(MainActivity.this,
+                            Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED){
+                        Toast.makeText(this, "Permission granted!", Toast.LENGTH_SHORT).show();
 
-
-            if(songCursor != null && songCursor.moveToFirst()){
-                int songTitle = songCursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
-                int songArtist = songCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
-                int songLocation = songCursor.getColumnIndex(MediaStore.Audio.Media.DATA);
-                int songDuration = songCursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
-
-                do{
-                    String currentTitle = songCursor.getString(songTitle);
-                    String currentArtist = songCursor.getString(songArtist);
-                    String currentLocation = songCursor.getString(songLocation);
-                    String currentDuration = songCursor.getString(songDuration);
-                    songListItem cursorItem = new songListItem(currentTitle, currentArtist, currentLocation, currentDuration);
-                    songs.add(cursorItem);
-                }while (songCursor.moveToNext());
-            }
-        }
-        //Also came from video
-        @Override
-        public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults){
-            switch (requestCode){
-                case MY_PERMISSION_REQUEST: {
-                    if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                        if(ContextCompat.checkSelfPermission(MainActivity.this,
-                                Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED){
-                            Toast.makeText(this, "Permission granted!", Toast.LENGTH_SHORT).show();
-
-                            doStuff();
-                        }
-                    } else {
-                        Toast.makeText(this, "No permission granted!", Toast.LENGTH_SHORT).show();
-                        finish();
+                        getMusic();
                     }
-                    return;
+                } else {
+                    Toast.makeText(this, "No permission granted!", Toast.LENGTH_SHORT).show();
+                    finish();
                 }
+                return;
             }
+        }
     }
 
     @Override
@@ -173,16 +153,6 @@ public class MainActivity extends AppCompatActivity {
 
     // read user music directory, use adapter to populate recyclerview
     private void initRecycler(){
-        /*songListItem test1 = new songListItem("Test this");
-        songListItem test2 = new songListItem("Test are cool");
-        songListItem test3 = new songListItem("Test bananana");
-        songListItem test4 = new songListItem("Test balls");
-
-        songs.add(test1);
-        songs.add(test2);
-        songs.add(test3);
-        songs.add(test4);
-        */
         ItemAdapter adapter = new ItemAdapter(songs);
         mRecycler.setAdapter(adapter);
         mRecycler.setLayoutManager(new LinearLayoutManager(this));
