@@ -2,6 +2,7 @@ package com.example.listenonthefly;
 
 import android.Manifest;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -26,6 +27,8 @@ import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
             }
         } else
             {
-                getMusic();// we may already have this method named something else.
+                getMusic();
             }
 
         initUI();
@@ -74,22 +77,22 @@ public class MainActivity extends AppCompatActivity {
 
     public void getMusic(){
         ContentResolver contentResolver = getContentResolver();
-        Uri songUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        Log.d(TAG, songUri.getPath());
-        Cursor songCursor = contentResolver.query(songUri, null, null, null, null);
+        Uri songsUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        Log.d(TAG, songsUri.getPath());
+        Cursor songCursor = contentResolver.query(songsUri, null, null, null, null);
 
         if (songCursor != null && songCursor.moveToFirst()) {
             int songTitle = songCursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
             int songArtist = songCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
-            int songLocation = songCursor.getColumnIndex(MediaStore.Audio.Media.DATA);
+            int songID = songCursor.getColumnIndex(MediaStore.Audio.Media._ID);
             int songDuration = songCursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
 
             do {
                 String currentTitle = songCursor.getString(songTitle);
                 String currentArtist = songCursor.getString(songArtist);
-                String currentLocation = songCursor.getString(songLocation);
+                Uri currentUri = ContentUris.withAppendedId(songsUri, songCursor.getInt(songID));
                 String currentDuration = songCursor.getString(songDuration);
-                songListItem cursorItem = new songListItem(currentTitle, currentArtist, currentLocation, currentDuration);
+                songListItem cursorItem = new songListItem(currentTitle, currentArtist, currentUri, currentDuration);
                 songs.add(cursorItem);
             } while (songCursor.moveToNext());
         }
@@ -118,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart(){
         super.onStart();
-        mPlayerAdapter.loadMedia(MEDIA_RES_ID);
+        //mPlayerAdapter.loadMedia(MEDIA_RES_ID);
     }
 
     @Override
@@ -191,6 +194,14 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "initPlaybackController: complete");
     }
 
+    public void updateCurrentPlayingUI(int updateTo){
+        TextView tvCTitle = findViewById(R.id.tvCurrentTitle);
+        tvCTitle.setText(songs.get(updateTo).getTitle());
+
+        TextView tvCDuration = findViewById(R.id.tvCurrentDuration);
+        tvCDuration.setText(songs.get(updateTo).getDuration());
+    }
+
     public class PlaybackListener extends PlaybackInfoListener {
         @Override
         public void onDurationChanged(int duration){
@@ -202,18 +213,32 @@ public class MainActivity extends AppCompatActivity {
         public void onPositionChanged(int position){
             if (!isUserSeeking){
                 mSeekBar.setProgress(position, true);
-                Log.d(TAG, "onPositionChanged: complete");
+                //Log.d(TAG, "onPositionChanged: complete");
             }
+        }
+
+        @Override
+        void onPlaybackCompleted() {
+            int nextSongId = currentSongId + 1;
+            mPlayerAdapter.release();
+
+            if(songs.get(nextSongId) != null){
+                mPlayerAdapter.loadMedia(songs.get(nextSongId).getSongUri());
+                mPlayerAdapter.play();
+                updateCurrentPlayingUI(nextSongId);
+                currentSongId = nextSongId;
+            }
+            Log.d(TAG, "onPlaybackCompleted: complete");
         }
     }
 
     public class songListItem{
         private String title;
         private String artist;
-        private String songUri;
+        private Uri songUri;
         private String duration;
 
-        public songListItem(String inputTitle, String inputArtist, String inputUri, String inputDuration){
+        public songListItem(String inputTitle, String inputArtist, Uri inputUri, String inputDuration){
             title = inputTitle;
             artist = inputArtist;
             songUri = inputUri;
@@ -232,7 +257,7 @@ public class MainActivity extends AppCompatActivity {
             return artist;
         }
 
-        public String getSongUri() {
+        public Uri getSongUri() {
             return songUri;
         }
 
@@ -290,6 +315,13 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v){
                         currentSongId = mRecycler.getChildAdapterPosition(v);
+
+                        mPlayerAdapter.release();
+                        mPlayerAdapter.loadMedia(songs.get(currentSongId).getSongUri());
+                        mPlayerAdapter.play();
+
+                        updateCurrentPlayingUI(currentSongId);
+
                         Log.d(TAG, "ViewHolder onClick: complete");
                     }
                 });

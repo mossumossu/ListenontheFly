@@ -3,6 +3,7 @@ package com.example.listenonthefly;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.util.Log;
 
 import java.util.concurrent.Executors;
@@ -15,7 +16,7 @@ public class PlayerHolder implements PlayerAdapter {
 
     private final Context mContext;
     private MediaPlayer mMediaPlayer;
-    private int resourceId;
+    private Uri songUri;
     private PlaybackInfoListener mPlaybackInfoListener;
     private ScheduledExecutorService mExecutor;
     private Runnable mSeekbarPositionUpdateTask;
@@ -30,7 +31,7 @@ public class PlayerHolder implements PlayerAdapter {
             mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
-                    stopListener(true);
+                    nextSong();
                 }
             });
         }
@@ -42,23 +43,22 @@ public class PlayerHolder implements PlayerAdapter {
     }
 
     @Override
-    public void loadMedia(int iResourceId) {
-        resourceId = iResourceId;
+    public void loadMedia(Uri iUri) {
+        songUri = iUri;
 
         initMediaPlayer();
 
-        AssetFileDescriptor assetFileDescriptor = mContext.getResources().openRawResourceFd(resourceId);
-
         try {
-            mMediaPlayer.setDataSource(assetFileDescriptor);
+            mMediaPlayer.setDataSource(mContext,songUri);
         } catch (Exception e){
-            Log.d(TAG, e.toString());
+            Log.d(TAG, "setDataSource" + e.toString());
+            Log.d(TAG, songUri.toString());
         }
 
         try {
             mMediaPlayer.prepare();
         } catch (Exception e){
-            Log.d(TAG, e.toString());
+            Log.d(TAG, "prepare" + e.toString());
         }
 
         initListener();
@@ -79,6 +79,8 @@ public class PlayerHolder implements PlayerAdapter {
         }
         return false;
     }
+
+
 
     @Override
     public void play() {
@@ -143,6 +145,12 @@ public class PlayerHolder implements PlayerAdapter {
             if (mPlaybackInfoListener != null){
                 mPlaybackInfoListener.onPositionChanged(currentPos);
             }
+        }
+    }
+
+    private void nextSong(){
+        if (mMediaPlayer != null){
+            mPlaybackInfoListener.onPlaybackCompleted();
         }
     }
 

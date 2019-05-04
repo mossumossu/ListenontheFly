@@ -1,8 +1,10 @@
 package com.example.listenonthefly;
 
+import android.net.Uri;
+
 public interface PlayerAdapter {
 
-    void loadMedia(int resourceId);
+    void loadMedia(Uri iUri);
 
     void release();
 
