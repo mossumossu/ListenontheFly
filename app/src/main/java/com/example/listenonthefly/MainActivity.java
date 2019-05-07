@@ -32,6 +32,8 @@ import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -91,7 +93,13 @@ public class MainActivity extends AppCompatActivity {
                 String currentTitle = songCursor.getString(songTitle);
                 String currentArtist = songCursor.getString(songArtist);
                 Uri currentUri = ContentUris.withAppendedId(songsUri, songCursor.getInt(songID));
-                String currentDuration = songCursor.getString(songDuration);
+
+                long currentMSDuration = songCursor.getInt(songDuration);
+                String currentDuration = String.format(Locale.US,"%d:%02d",
+                        TimeUnit.MILLISECONDS.toMinutes(currentMSDuration),
+                        TimeUnit.MILLISECONDS.toSeconds(currentMSDuration) -
+                                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(currentMSDuration)));
+
                 songListItem cursorItem = new songListItem(currentTitle, currentArtist, currentUri, currentDuration);
                 songs.add(cursorItem);
             } while (songCursor.moveToNext());
@@ -292,6 +300,12 @@ public class MainActivity extends AppCompatActivity {
             TextView tvTitle = viewHolder.tvTitle;
             tvTitle.setText(item.getTitle());
 
+            TextView tvArtist = viewHolder.tvArtist;
+            tvArtist.setText(item.getArtist());
+
+            TextView tvDuration = viewHolder.tvDuration;
+            tvDuration.setText(item.getDuration());
+
             // expand as needed for other properties
 
         }
@@ -304,12 +318,16 @@ public class MainActivity extends AppCompatActivity {
         public class ViewHolder extends RecyclerView.ViewHolder{
 
             public TextView tvTitle;
+            public TextView tvArtist;
+            public TextView tvDuration;
 
 
             public ViewHolder(@NonNull View itemView) {
                 super(itemView);
 
                 tvTitle = (TextView) itemView.findViewById(R.id.tvTitle);
+                tvArtist = (TextView) itemView.findViewById(R.id.tvArtist);
+                tvDuration = (TextView) itemView.findViewById(R.id.tvDuration);
 
                 itemView.setOnClickListener(new View.OnClickListener(){
                     @Override
