@@ -339,9 +339,9 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(View v){
                         currentSongId = mRecycler.getChildAdapterPosition(v);
 
-                        notifyItemChanged(selectedPos);
-                        selectedPos = currentSongId;
-                        notifyItemChanged(selectedPos);
+                        //notifyItemChanged(selectedPos);
+                        //selectedPos = currentSongId;
+                        //notifyItemChanged(selectedPos);
 
                         mPlayerAdapter.release();
                         mPlayerAdapter.loadMedia(songs.get(currentSongId).getSongUri());
