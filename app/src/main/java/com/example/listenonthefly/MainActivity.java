@@ -1,6 +1,7 @@
 package com.example.listenonthefly;
 
 import android.Manifest;
+import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
@@ -39,9 +40,6 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String TAG = "MainActivity";
     private static final int MY_PERMISSION_REQUEST = 1;
-
-    // royalty free music from bensound.com, for testing
-    public static final int MEDIA_RES_ID = R.raw.bensoundtheelevatorbossanova;
 
     public int currentSongId = 0;
 
@@ -253,10 +251,6 @@ public class MainActivity extends AppCompatActivity {
             duration = inputDuration;
         }
 
-        public songListItem(String inputTitle){
-            title = inputTitle;
-        }
-
         public String getTitle() {
             return title;
         }
@@ -274,8 +268,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder>{
+    public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder>
+    implements ChangeSelect {
         private List<songListItem> songs;
+        private int selectedPos = RecyclerView.NO_POSITION;
 
         public ItemAdapter(List<songListItem> inputSongs) {
             this.songs = inputSongs;
@@ -296,6 +292,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(@NonNull ItemAdapter.ViewHolder viewHolder, int i) {
             songListItem item = songs.get(i);
+            viewHolder.itemView.setSelected(selectedPos == i);
 
             TextView tvTitle = viewHolder.tvTitle;
             tvTitle.setText(item.getTitle());
@@ -313,6 +310,14 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public int getItemCount(){
             return songs.size();
+        }
+
+        //TODO: properly update recycler on current song
+        @Override
+        public void change(int position) {
+            notifyItemChanged(selectedPos);
+            selectedPos = currentSongId;
+            notifyItemChanged(selectedPos);
         }
 
         public class ViewHolder extends RecyclerView.ViewHolder{
@@ -333,6 +338,10 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v){
                         currentSongId = mRecycler.getChildAdapterPosition(v);
+
+                        notifyItemChanged(selectedPos);
+                        selectedPos = currentSongId;
+                        notifyItemChanged(selectedPos);
 
                         mPlayerAdapter.release();
                         mPlayerAdapter.loadMedia(songs.get(currentSongId).getSongUri());
